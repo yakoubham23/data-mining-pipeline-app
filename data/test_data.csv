@@ -1,0 +1,201 @@
+age,annual_income,spending_score,tenure,city,gender,education,purchased
+56.0,78053.0,23.0,6,Constantine,Female,High School,0
+69.0,41959.0,66.0,4,Algiers,Male,Bachelor,1
+46.0,25530.0,27.0,0,Algiers,Male,PhD,0
+32.0,114856.0,2.0,6,Batna,Female,High School,1
+60.0,23748.0,90.0,6,Batna,Female,High School,1
+25.0,117504.0,17.0,8,Oran,Male,Bachelor,0
+38.0,118098.0,33.0,2,Constantine,Male,High School,0
+56.0,33545.0,9.0,8,Constantine,Male,Master,0
+36.0,86199.0,43.0,0,Annaba,Female,Master,0
+40.0,54766.0,48.0,0,Oran,Female,PhD,0
+28.0,93530.0,39.0,3,Oran,Female,High School,0
+28.0,113557.0,93.0,8,Oran,Female,Bachelor,0
+41.0,81087.0,42.0,5,Oran,Female,Master,1
+53.0,115839.0,26.0,2,Constantine,Male,Bachelor,1
+57.0,88840.0,99.0,0,Constantine,Female,Bachelor,0
+41.0,74384.0,50.0,3,Oran,Male,Master,0
+20.0,71005.0,25.0,8,Annaba,Male,Bachelor,0
+39.0,66576.0,24.0,2,Algiers,Male,Master,0
+19.0,59353.0,13.0,8,Algiers,Female,Bachelor,1
+41.0,82003.0,60.0,6,Annaba,Female,Master,0
+61.0,,7.0,3,Oran,Female,High School,0
+47.0,72733.0,57.0,2,Constantine,Male,PhD,0
+55.0,85318.0,36.0,9,Algiers,Male,Master,0
+19.0,109474.0,45.0,4,Batna,Male,Master,0
+38.0,43664.0,20.0,4,,Male,PhD,1
+50.0,87172.0,65.0,2,Annaba,Male,Master,0
+29.0,105616.0,8.0,8,Oran,Male,Master,0
+39.0,113264.0,16.0,3,,Female,Bachelor,0
+61.0,46736.0,14.0,4,Oran,Female,PhD,1
+42.0,114209.0,,3,Algiers,Female,High School,1
+66.0,,87.0,4,Annaba,Female,Master,0
+44.0,110084.0,15.0,6,Annaba,Male,PhD,0
+59.0,58623.0,92.0,8,Batna,Male,Bachelor,0
+45.0,27392.0,98.0,6,,Female,High School,0
+33.0,75680.0,66.0,4,Batna,Male,PhD,1
+32.0,66717.0,32.0,9,Oran,Female,High School,0
+64.0,107092.0,87.0,9,Batna,Female,High School,0
+68.0,70859.0,63.0,6,Constantine,Female,High School,0
+61.0,46309.0,86.0,9,Constantine,Male,Master,0
+69.0,107455.0,51.0,4,Constantine,Female,Master,0
+,83734.0,25.0,2,Constantine,Female,Bachelor,1
+54.0,90467.0,58.0,6,Algiers,Female,Bachelor,0
+68.0,72662.0,63.0,1,Constantine,Male,PhD,0
+24.0,118506.0,62.0,8,Annaba,Male,Bachelor,0
+38.0,32688.0,22.0,9,Annaba,Female,High School,0
+26.0,45342.0,58.0,9,Algiers,Male,High School,0
+56.0,57157.0,58.0,0,Constantine,Male,Master,0
+35.0,87863.0,86.0,5,Constantine,Male,High School,1
+21.0,72083.0,49.0,6,Constantine,Male,PhD,0
+,85733.0,52.0,7,Batna,Male,High School,0
+31.0,109045.0,42.0,9,Oran,Male,High School,0
+67.0,54698.0,70.0,8,Batna,Male,PhD,0
+26.0,100623.0,15.0,1,Oran,Male,Bachelor,1
+43.0,42671.0,54.0,9,Constantine,Male,Bachelor,1
+19.0,45184.0,60.0,1,Constantine,Male,PhD,0
+37.0,113384.0,97.0,4,Batna,Female,Master,0
+45.0,62107.0,8.0,4,Batna,Female,High School,0
+64.0,106202.0,,5,Oran,Male,PhD,0
+24.0,71663.0,60.0,2,Annaba,Female,High School,0
+61.0,35708.0,5.0,7,Oran,Female,Master,0
+25.0,111906.0,68.0,0,Batna,Male,High School,0
+64.0,69811.0,6.0,5,,Male,PhD,0
+52.0,22811.0,96.0,3,Algiers,Male,High School,1
+31.0,76250.0,94.0,0,Batna,Female,Bachelor,0
+34.0,92082.0,47.0,6,Algiers,Female,Master,0
+53.0,54754.0,99.0,8,Annaba,Male,Master,1
+67.0,115742.0,55.0,3,Oran,Male,Master,0
+57.0,31411.0,40.0,3,Oran,Male,PhD,0
+21.0,22911.0,52.0,5,Algiers,Female,Master,0
+19.0,87270.0,16.0,2,Oran,Female,Bachelor,0
+23.0,103763.0,13.0,5,Batna,Female,PhD,1
+59.0,28680.0,30.0,6,Constantine,Female,Bachelor,1
+21.0,104896.0,19.0,9,Algiers,Male,High School,0
+46.0,103879.0,17.0,9,Oran,Male,High School,0
+35.0,91295.0,63.0,2,Algiers,Male,High School,0
+,108614.0,19.0,6,,Male,High School,0
+61.0,31111.0,92.0,2,Constantine,Female,Bachelor,0
+51.0,57504.0,58.0,1,Batna,Female,PhD,1
+27.0,21802.0,55.0,9,Algiers,Male,PhD,0
+53.0,28155.0,90.0,3,Oran,Male,Master,1
+31.0,93656.0,90.0,7,,Female,Bachelor,0
+48.0,59384.0,62.0,8,Algiers,Male,High School,0
+,67254.0,23.0,6,Algiers,Female,Bachelor,0
+,,9.0,0,Constantine,Male,Master,1
+25.0,105981.0,12.0,2,Batna,Male,Master,1
+31.0,80713.0,1.0,8,Annaba,Male,Bachelor,1
+40.0,50306.0,58.0,0,Oran,Male,Bachelor,0
+57.0,36646.0,1.0,8,Annaba,Male,Bachelor,0
+38.0,66843.0,34.0,7,Oran,Male,PhD,1
+33.0,116601.0,96.0,0,Batna,Male,High School,0
+62.0,110735.0,48.0,5,Oran,Female,Bachelor,0
+35.0,36371.0,89.0,4,Constantine,Female,Bachelor,0
+64.0,97371.0,1.0,5,Constantine,Female,Bachelor,1
+41.0,22049.0,16.0,9,Constantine,Female,Master,1
+43.0,51616.0,61.0,4,,Female,Master,0
+42.0,40932.0,64.0,5,Annaba,Male,PhD,1
+62.0,49855.0,63.0,4,Batna,Male,High School,1
+58.0,,69.0,4,Oran,Female,PhD,0
+46.0,92694.0,22.0,3,Oran,Male,High School,0
+32.0,63016.0,93.0,2,Constantine,Female,Master,1
+62.0,27400.0,67.0,2,Constantine,Female,Master,0
+18.0,62642.0,76.0,3,Algiers,Male,Master,0
+42.0,35151.0,26.0,8,Batna,Male,PhD,0
+24.0,,16.0,1,Annaba,Male,Bachelor,1
+26.0,86690.0,51.0,8,Oran,Female,Bachelor,1
+41.0,24499.0,86.0,0,Algiers,Male,Master,1
+18.0,26295.0,57.0,0,Algiers,Female,Bachelor,0
+61.0,,29.0,4,,Female,Bachelor,1
+25.0,32183.0,78.0,5,Annaba,Female,PhD,1
+41.0,49299.0,92.0,5,Algiers,Male,High School,0
+28.0,32874.0,69.0,2,Algiers,Male,Master,1
+68.0,52711.0,47.0,6,Batna,Female,Master,0
+34.0,25539.0,94.0,8,Annaba,Male,PhD,0
+25.0,73351.0,62.0,9,Algiers,Male,PhD,0
+,81267.0,69.0,7,Annaba,Male,Bachelor,0
+52.0,68354.0,76.0,5,Oran,Female,Master,0
+50.0,,16.0,7,Constantine,Female,High School,0
+22.0,58360.0,90.0,4,Algiers,Male,PhD,0
+59.0,102018.0,90.0,7,Batna,Female,High School,1
+56.0,22200.0,48.0,9,Oran,Male,High School,0
+58.0,88497.0,85.0,3,Annaba,Male,Master,0
+45.0,66975.0,39.0,9,Oran,Male,Master,0
+24.0,41357.0,100.0,7,Algiers,Male,PhD,1
+26.0,97505.0,33.0,9,Annaba,Female,Master,0
+25.0,22869.0,94.0,1,Constantine,Female,Master,0
+29.0,81135.0,23.0,4,Oran,Female,Master,1
+51.0,70108.0,10.0,8,Algiers,Male,High School,0
+50.0,114179.0,69.0,3,Batna,Male,PhD,0
+,110272.0,100.0,5,Annaba,Male,Bachelor,0
+40.0,58467.0,34.0,0,Oran,Female,High School,1
+41.0,43328.0,52.0,8,Oran,Male,Master,0
+54.0,111412.0,,0,Constantine,Female,High School,1
+52.0,106831.0,10.0,4,Constantine,Female,Master,0
+61.0,23987.0,19.0,3,Batna,Female,Master,1
+57.0,78871.0,58.0,2,Batna,Female,High School,1
+39.0,,96.0,5,Algiers,Female,PhD,1
+44.0,66214.0,1.0,1,Algiers,Female,Master,0
+52.0,119522.0,69.0,2,Batna,Male,PhD,1
+18.0,106416.0,4.0,4,Batna,Male,Bachelor,0
+52.0,90271.0,16.0,8,Annaba,Female,Master,0
+54.0,64064.0,24.0,1,Constantine,Female,PhD,0
+64.0,90091.0,80.0,9,Algiers,Male,PhD,1
+31.0,60818.0,2.0,7,Constantine,Female,Bachelor,1
+20.0,65525.0,92.0,1,Constantine,Female,PhD,1
+18.0,39830.0,32.0,4,Batna,Male,PhD,0
+,37429.0,91.0,6,Annaba,Female,Bachelor,0
+43.0,,84.0,7,Oran,Female,Master,1
+31.0,99909.0,24.0,0,,Female,PhD,0
+56.0,67333.0,12.0,5,Annaba,Male,PhD,0
+44.0,23436.0,50.0,0,Constantine,Male,PhD,0
+26.0,94290.0,35.0,1,Annaba,Male,High School,0
+32.0,96213.0,33.0,0,Algiers,Female,Bachelor,0
+32.0,25895.0,33.0,4,Constantine,Female,High School,0
+43.0,39738.0,61.0,9,Algiers,Male,Bachelor,0
+,50746.0,51.0,8,Oran,Female,Master,0
+30.0,69377.0,43.0,5,Constantine,Female,Master,1
+68.0,68404.0,12.0,0,Oran,Female,PhD,0
+49.0,74045.0,67.0,0,Constantine,Female,Bachelor,0
+56.0,117888.0,65.0,1,Batna,Female,Master,0
+66.0,59790.0,33.0,8,Annaba,Male,Bachelor,0
+69.0,25600.0,40.0,2,Batna,Female,Master,1
+49.0,114660.0,74.0,0,Oran,Male,High School,1
+21.0,113179.0,43.0,4,Annaba,Female,Master,0
+47.0,60764.0,44.0,6,Constantine,Male,High School,0
+,,29.0,5,Annaba,Female,Master,1
+40.0,65714.0,13.0,0,Algiers,Male,PhD,1
+56.0,76835.0,12.0,4,Annaba,Female,High School,0
+62.0,93744.0,95.0,4,,Male,Master,0
+32.0,76491.0,46.0,5,Annaba,Female,PhD,0
+,38589.0,2.0,2,Algiers,Male,High School,1
+46.0,63484.0,35.0,4,Oran,Female,PhD,0
+53.0,102989.0,87.0,6,Batna,Male,Bachelor,1
+30.0,56212.0,81.0,4,Constantine,Male,Bachelor,0
+49.0,63525.0,90.0,4,Annaba,Female,High School,0
+24.0,67202.0,8.0,4,Batna,Female,Master,0
+68.0,52635.0,93.0,9,Constantine,Male,High School,0
+39.0,83208.0,26.0,9,Constantine,Female,PhD,0
+45.0,53828.0,,2,Algiers,Male,Master,0
+19.0,38711.0,90.0,0,Oran,Male,Bachelor,0
+59.0,23420.0,34.0,4,Oran,Male,Master,1
+62.0,116752.0,7.0,8,Batna,Female,Bachelor,0
+,20301.0,68.0,0,Oran,Male,Master,0
+45.0,65236.0,58.0,2,,Male,Master,1
+45.0,,75.0,3,Oran,Female,Master,1
+61.0,74240.0,29.0,0,,Female,PhD,1
+61.0,85726.0,36.0,0,Oran,Female,PhD,1
+37.0,30492.0,89.0,7,Annaba,Female,High School,0
+47.0,26102.0,21.0,1,Algiers,Male,High School,0
+28.0,70336.0,36.0,7,Batna,Male,Bachelor,1
+45.0,105314.0,10.0,6,Algiers,Male,PhD,0
+42.0,46641.0,73.0,9,Algiers,Male,Bachelor,0
+56.0,54584.0,24.0,9,Algiers,Female,High School,1
+50.0,52745.0,64.0,1,Constantine,Male,Bachelor,0
+18.0,43093.0,99.0,5,Constantine,Male,High School,0
+44.0,,49.0,5,Algiers,Female,PhD,0
+69.0,71885.0,99.0,2,Batna,Male,Master,0
+30.0,,36.0,1,Annaba,Male,PhD,0
+58.0,92991.0,82.0,0,Annaba,Male,Bachelor,0
+20.0,24014.0,96.0,5,Oran,Male,Bachelor,1
+56.0,31093.0,24.0,4,Batna,Male,PhD,0
