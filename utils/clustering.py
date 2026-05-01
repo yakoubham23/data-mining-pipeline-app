@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import time
 import pandas as pd
-from sklearn.cluster import KMeans
+import numpy as np
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, BisectingKMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
+from kneed import KneeLocator
 
 try:
 	from sklearn_extra.cluster import KMedoids
@@ -38,7 +41,7 @@ def prepare_features_for_clustering(
 	return scaled_df, scaler
 
 
-def _create_model(algorithm: str, n_clusters: int, random_state: int):
+def _create_model(algorithm: str, n_clusters: int, random_state: int, **kwargs):
 	if algorithm == "K-Means":
 		return KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
 
@@ -49,6 +52,17 @@ def _create_model(algorithm: str, n_clusters: int, random_state: int):
 			)
 		return KMedoids(n_clusters=n_clusters, random_state=random_state, init="k-medoids++")
 
+	if algorithm == "AGNES (Agglomerative)":
+		return AgglomerativeClustering(n_clusters=n_clusters)
+
+	if algorithm == "DIANA (Divisive)":
+		return BisectingKMeans(n_clusters=n_clusters, random_state=random_state, n_init=1)
+
+	if algorithm == "DBSCAN":
+		eps = kwargs.get("eps", 0.5)
+		min_samples = kwargs.get("min_samples", 5)
+		return DBSCAN(eps=eps, min_samples=min_samples)
+
 	raise ValueError("Unsupported clustering algorithm.")
 
 
@@ -58,8 +72,11 @@ def compute_elbow_curve(
 	min_k: int = 2,
 	max_k: int = 10,
 	random_state: int = 42,
-) -> pd.DataFrame:
-	"""Compute inertia values for a range of k values (elbow method)."""
+) -> tuple[pd.DataFrame, int | None]:
+	"""Compute inertia values for a range of k values and suggest best k."""
+	if algorithm in ["DBSCAN"]:
+		return pd.DataFrame(), None
+
 	if len(scaled_df) < 3:
 		raise ValueError("At least 3 rows are required to compute the elbow curve.")
 
@@ -68,12 +85,32 @@ def compute_elbow_curve(
 		raise ValueError("Dataset is too small for the selected elbow k-range.")
 
 	records: list[dict[str, float | int]] = []
-	for k in range(min_k, max_valid_k + 1):
+	ks = range(min_k, max_valid_k + 1)
+	inertias = []
+
+	for k in ks:
 		model = _create_model(algorithm=algorithm, n_clusters=k, random_state=random_state)
 		model.fit(scaled_df)
-		records.append({"k": k, "inertia": float(model.inertia_)})
+		
+		# AgglomerativeClustering doesn't have inertia_, we might use another metric or just skip
+		if hasattr(model, "inertia_"):
+			inertia = float(model.inertia_)
+		else:
+			# Fallback or alternative for models without inertia
+			inertia = 0.0
+			
+		records.append({"k": k, "inertia": inertia})
+		inertias.append(inertia)
 
-	return pd.DataFrame(records)
+	best_k = None
+	if any(v > 0 for v in inertias):
+		try:
+			kn = KneeLocator(ks, inertias, curve="convex", direction="decreasing")
+			best_k = kn.elbow
+		except Exception:
+			best_k = None
+
+	return pd.DataFrame(records), best_k
 
 
 def run_clustering(
@@ -81,25 +118,58 @@ def run_clustering(
 	algorithm: str,
 	n_clusters: int,
 	random_state: int = 42,
-) -> tuple[pd.Series, object]:
-	"""Fit the selected clustering model and return cluster labels."""
-	if n_clusters < 2:
-		raise ValueError("Number of clusters must be at least 2.")
-	if n_clusters >= len(scaled_df):
-		raise ValueError("Number of clusters must be smaller than the number of samples.")
-
-	model = _create_model(algorithm=algorithm, n_clusters=n_clusters, random_state=random_state)
-	labels = model.fit_predict(scaled_df)
+	**kwargs
+) -> tuple[pd.Series, object, float]:
+	"""Fit the selected clustering model and return labels, model, and execution time."""
+	start_time = time.time()
+	
+	model = _create_model(algorithm=algorithm, n_clusters=n_clusters, random_state=random_state, **kwargs)
+	
+	if algorithm == "DBSCAN":
+		labels = model.fit_predict(scaled_df)
+	else:
+		if n_clusters < 2:
+			raise ValueError("Number of clusters must be at least 2.")
+		if n_clusters >= len(scaled_df):
+			raise ValueError("Number of clusters must be smaller than the number of samples.")
+		labels = model.fit_predict(scaled_df)
+		
+	execution_time = time.time() - start_time
 	labels_series = pd.Series(labels, index=scaled_df.index, name="cluster")
-	return labels_series, model
+	return labels_series, model, execution_time
 
 
 def compute_silhouette(scaled_df: pd.DataFrame, labels: pd.Series) -> float:
 	"""Compute silhouette score for the current clustering labels."""
-	unique_clusters = labels.nunique()
-	if unique_clusters < 2:
-		raise ValueError("Silhouette score requires at least 2 clusters.")
+	unique_clusters = [c for c in labels.unique() if c != -1] # Exclude DBSCAN noise
+	if len(unique_clusters) < 2:
+		return 0.0
 	return float(silhouette_score(scaled_df, labels))
+
+
+def compare_algorithms(
+	scaled_df: pd.DataFrame,
+	algorithms: list[str],
+	n_clusters: int,
+	random_state: int = 42
+) -> pd.DataFrame:
+	"""Run multiple algorithms and compare their performance."""
+	results = []
+	for algo in algorithms:
+		try:
+			labels, _, exec_time = run_clustering(scaled_df, algo, n_clusters, random_state)
+			sil_score = compute_silhouette(scaled_df, labels)
+			
+			results.append({
+				"Algorithm": algo,
+				"Execution Time (s)": round(exec_time, 6),
+				"Silhouette Score": round(sil_score, 4),
+				"Clusters Found": len([c for c in labels.unique() if c != -1])
+			})
+		except Exception as e:
+			print(f"Error comparing {algo}: {e}")
+			
+	return pd.DataFrame(results)
 
 
 def reduce_with_pca(scaled_df: pd.DataFrame, n_components: int = 2) -> pd.DataFrame:

@@ -111,3 +111,26 @@ def create_confusion_matrix_figure(
 	)
 	fig.update_layout(xaxis_title="Predicted", yaxis_title="Actual")
 	return fig
+
+
+def create_comparison_charts(comparison_df: pd.DataFrame) -> tuple[go.Figure, go.Figure]:
+	"""Create bar charts for algorithm comparison."""
+	time_fig = px.bar(
+		comparison_df,
+		x="Algorithm",
+		y="Execution Time (s)",
+		title="Execution Time Comparison",
+		template="plotly_white",
+		color="Algorithm"
+	)
+	
+	sil_fig = px.bar(
+		comparison_df,
+		x="Algorithm",
+		y="Silhouette Score",
+		title="Silhouette Score Comparison",
+		template="plotly_white",
+		color="Algorithm"
+	)
+	
+	return time_fig, sil_fig

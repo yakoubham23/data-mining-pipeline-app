@@ -10,14 +10,17 @@ from utils.clustering import (
 	prepare_features_for_clustering,
 	reduce_with_pca,
 	run_clustering,
+	compare_algorithms,
 )
 from utils.preprocessing import detect_column_types, load_csv_dataset
 from utils.visualization import (
 	create_cluster_2d_figure,
 	create_cluster_distribution_figure,
 	create_elbow_figure,
+	create_comparison_charts,
 )
 
+ALGORITHMS = ["K-Means", "K-Medoids", "AGNES (Agglomerative)", "DIANA (Divisive)", "DBSCAN"]
 
 def _load_dataset_from_source(source_name: str):
 	sample_path = Path(__file__).resolve().parents[1] / "data" / "sample.csv"
@@ -46,7 +49,10 @@ def _load_dataset_from_source(source_name: str):
 
 
 st.title("🧠 Unsupervised Learning - Clustering")
-st.caption("Run K-Means or K-Medoids with elbow analysis and PCA visualization.")
+st.caption("Run K-Means, K-Medoids, AGNES, DIANA, or DBSCAN with performance comparison.")
+
+if "best_k" not in st.session_state:
+	st.session_state.best_k = 3
 
 with st.expander("📥 Dataset Selection", expanded=True):
 	source = st.radio(
@@ -88,29 +94,46 @@ with st.expander("⚙️ Clustering Configuration", expanded=True):
 	)
 
 	config_cols = st.columns(3)
-	algorithm = config_cols[0].selectbox("Algorithm", options=["K-Means", "K-Medoids"])
-	max_clusters = min(10, len(df) - 1)
-	n_clusters = config_cols[1].slider("Number of clusters (k)", min_value=2, max_value=max_clusters, value=3)
-	random_state = config_cols[2].number_input("Random state", min_value=0, value=42, step=1)
+	algorithm = config_cols[0].selectbox("Algorithm", options=ALGORITHMS)
+	
+	dbscan_params = {}
+	if algorithm == "DBSCAN":
+		dbscan_params["eps"] = config_cols[1].number_input("Epsilon (eps)", min_value=0.1, value=0.5, step=0.1)
+		dbscan_params["min_samples"] = config_cols[2].number_input("Min Samples", min_value=1, value=5, step=1)
+		n_clusters = 0 # Not used for DBSCAN
+	else:
+		max_clusters = min(10, len(df) - 1)
+		n_clusters = config_cols[1].slider("Number of clusters (k)", min_value=2, max_value=max_clusters, value=st.session_state.best_k)
+		random_state = config_cols[2].number_input("Random state", min_value=0, value=42, step=1)
 
-	run_clustering_btn = st.button("🚀 Run clustering", use_container_width=True)
+	btn_cols = st.columns(2)
+	run_clustering_btn = btn_cols[0].button("🚀 Run clustering", use_container_width=True)
+	compare_btn = btn_cols[1].button("📊 Compare All Algorithms", use_container_width=True)
 
 if run_clustering_btn:
 	try:
 		scaled_df, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
-		elbow_df = compute_elbow_curve(
+		
+		# Auto Elbow Suggestion
+		elbow_df, best_k = compute_elbow_curve(
 			scaled_df,
-			algorithm=algorithm,
+			algorithm="K-Means", # Usually K-Means is used for elbow
 			min_k=2,
 			max_k=min(10, len(scaled_df) - 1),
-			random_state=int(random_state),
+			random_state=42,
 		)
-		labels, model = run_clustering(
+		if best_k:
+			st.session_state.best_k = best_k
+			st.info(f"💡 The Elbow method suggests an optimal k = {best_k}")
+
+		labels, model, exec_time = run_clustering(
 			scaled_df,
 			algorithm=algorithm,
 			n_clusters=n_clusters,
-			random_state=int(random_state),
+			random_state=int(random_state) if algorithm != "DBSCAN" else 42,
+			**dbscan_params
 		)
+		
 		silhouette = compute_silhouette(scaled_df, labels)
 		pca_df = reduce_with_pca(scaled_df, n_components=2)
 		pca_df["cluster"] = labels.astype(str)
@@ -120,14 +143,16 @@ if run_clustering_btn:
 		st.session_state.clustered_df = clustered_df
 		st.session_state.cluster_model = model
 
-		st.subheader("📊 Clustering Results")
-		metric_cols = st.columns(3)
+		st.subheader(f"📊 {algorithm} Results")
+		metric_cols = st.columns(4)
 		metric_cols[0].metric("Silhouette Score", f"{silhouette:.4f}")
-		metric_cols[1].metric("Clusters", int(labels.nunique()))
-		metric_cols[2].metric("Algorithm", algorithm)
+		metric_cols[1].metric("Clusters Found", len([c for c in labels.unique() if c != -1]))
+		metric_cols[2].metric("Execution Time", f"{exec_time:.4f}s")
+		metric_cols[3].metric("Algorithm", algorithm)
 
-		elbow_fig = create_elbow_figure(elbow_df, algorithm_name=algorithm)
-		st.plotly_chart(elbow_fig, use_container_width=True)
+		if algorithm != "DBSCAN":
+			elbow_fig = create_elbow_figure(elbow_df, algorithm_name="K-Means (Reference)")
+			st.plotly_chart(elbow_fig, use_container_width=True)
 
 		cluster_fig = create_cluster_2d_figure(pca_df, cluster_col="cluster")
 		st.plotly_chart(cluster_fig, use_container_width=True)
@@ -141,9 +166,25 @@ if run_clustering_btn:
 		st.download_button(
 			"Download clustered dataset",
 			data=clustered_df.to_csv(index=False).encode("utf-8"),
-			file_name="clustered_dataset.csv",
+			file_name=f"clustered_{algorithm.lower().replace(' ', '_')}.csv",
 			mime="text/csv",
 			use_container_width=True,
 		)
 	except (ValueError, ImportError) as exc:
 		st.error(str(exc))
+
+if compare_btn:
+	try:
+		scaled_df, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
+		comparison_df = compare_algorithms(scaled_df, ALGORITHMS, n_clusters=n_clusters)
+		
+		st.subheader("🏁 Performance Comparison")
+		st.dataframe(comparison_df, use_container_width=True)
+		
+		time_fig, sil_fig = create_comparison_charts(comparison_df)
+		chart_cols = st.columns(2)
+		chart_cols[0].plotly_chart(time_fig, use_container_width=True)
+		chart_cols[1].plotly_chart(sil_fig, use_container_width=True)
+		
+	except Exception as exc:
+		st.error(f"Comparison failed: {exc}")
