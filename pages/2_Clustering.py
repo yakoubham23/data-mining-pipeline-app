@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 
 from utils.clustering import (
@@ -11,6 +12,7 @@ from utils.clustering import (
 	reduce_with_pca,
 	run_clustering,
 	compare_algorithms,
+	suggest_dbscan_params,
 )
 from utils.preprocessing import detect_column_types, load_csv_dataset
 from utils.visualization import (
@@ -18,7 +20,9 @@ from utils.visualization import (
 	create_cluster_distribution_figure,
 	create_elbow_figure,
 	create_comparison_charts,
+	create_dendrogram_figure,
 )
+import plotly.express as px
 
 ALGORITHMS = ["K-Means", "K-Medoids", "AGNES (Agglomerative)", "DIANA (Divisive)", "DBSCAN"]
 
@@ -49,10 +53,16 @@ def _load_dataset_from_source(source_name: str):
 
 
 st.title("🧠 Unsupervised Learning - Clustering")
-st.caption("Run K-Means, K-Medoids, AGNES, DIANA, or DBSCAN with performance comparison.")
+st.caption("Run K-Means, K-Medoids, AGNES, DIANA, or DBSCAN and compare results.")
 
 if "best_k" not in st.session_state:
 	st.session_state.best_k = 3
+
+if "elbow_df" not in st.session_state:
+	st.session_state.elbow_df = None
+
+if "comparison_history" not in st.session_state:
+	st.session_state.comparison_history = []
 
 with st.expander("📥 Dataset Selection", expanded=True):
 	source = st.radio(
@@ -72,11 +82,6 @@ if df is None:
 	st.stop()
 
 numeric_cols, categorical_cols = detect_column_types(df)
-overview_cols = st.columns(4)
-overview_cols[0].metric("Rows", len(df))
-overview_cols[1].metric("Columns", len(df.columns))
-overview_cols[2].metric("Numeric features", len(numeric_cols))
-overview_cols[3].metric("Categorical features", len(categorical_cols))
 
 if len(df) < 3:
 	st.error("Clustering requires at least 3 rows.")
@@ -86,51 +91,80 @@ if len(numeric_cols) < 2:
 	st.error("Clustering requires at least 2 numeric columns.")
 	st.stop()
 
-with st.expander("⚙️ Clustering Configuration", expanded=True):
-	feature_columns = st.multiselect(
-		"Numeric features for clustering",
+# --- STEP 1: ANALYSIS ---
+st.subheader("Step 1: 🔍 Analyze Optimal Number of Clusters (Elbow Method)")
+with st.expander("📊 Elbow Analysis Configuration", expanded=True):
+	analysis_cols = st.columns([2, 1])
+	feature_columns = analysis_cols[0].multiselect(
+		"Features for analysis",
 		options=numeric_cols,
 		default=numeric_cols[: min(5, len(numeric_cols))],
+		key="analysis_features"
 	)
+	
+	analyze_btn = analysis_cols[1].button("📉 Run Elbow Analysis", width='stretch')
 
+if analyze_btn:
+	try:
+		scaled_df_analysis, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
+		elbow_df, best_k = compute_elbow_curve(
+			scaled_df_analysis,
+			algorithm="K-Means",
+			min_k=2,
+			max_k=min(10, len(scaled_df_analysis) - 1),
+			random_state=42,
+		)
+		st.session_state.elbow_df = elbow_df
+		if best_k:
+			st.session_state.best_k = best_k
+	except Exception as exc:
+		st.error(f"Analysis failed: {exc}")
+
+if st.session_state.elbow_df is not None:
+	st.info(f"💡 The Elbow method suggests an optimal **k = {st.session_state.best_k}**")
+	elbow_fig = create_elbow_figure(st.session_state.elbow_df, algorithm_name="K-Means (Analysis)")
+	st.plotly_chart(elbow_fig, width='stretch')
+
+# --- STEP 2: CLUSTERING ---
+st.subheader("Step 2: 🚀 Run Clustering Algorithm")
+with st.expander("⚙️ Execution Configuration", expanded=True):
 	config_cols = st.columns(3)
 	algorithm = config_cols[0].selectbox("Algorithm", options=ALGORITHMS)
 	
+	random_state = 42
 	dbscan_params = {}
 	if algorithm == "DBSCAN":
-		dbscan_params["eps"] = config_cols[1].number_input("Epsilon (eps)", min_value=0.1, value=0.5, step=0.1)
-		dbscan_params["min_samples"] = config_cols[2].number_input("Min Samples", min_value=1, value=5, step=1)
-		n_clusters = 0 # Not used for DBSCAN
+		try:
+			scaled_df_temp, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
+			s_eps, s_min, k_dist_df = suggest_dbscan_params(scaled_df_temp)
+			st.info(f"💡 DBSCAN Suggestion: eps={s_eps:.3f}, min_samples={s_min}")
+			
+			with st.expander("📈 k-distance graph", expanded=False):
+				k_fig = px.line(k_dist_df, x="index", y="distance", title="k-distance Graph")
+				k_fig.add_hline(y=s_eps, line_dash="dash", line_color="red")
+				st.plotly_chart(k_fig, width='stretch')
+			eps_val, min_samples_val = s_eps, s_min
+		except Exception:
+			eps_val, min_samples_val = 0.5, 5
+
+		dbscan_params["eps"] = config_cols[1].number_input("Epsilon (eps)", min_value=0.01, value=float(eps_val), step=0.05, format="%.3f")
+		dbscan_params["min_samples"] = config_cols[2].number_input("Min Samples", min_value=1, value=int(min_samples_val), step=1)
+		n_clusters = 0
 	else:
 		max_clusters = min(10, len(df) - 1)
 		n_clusters = config_cols[1].slider("Number of clusters (k)", min_value=2, max_value=max_clusters, value=st.session_state.best_k)
 		random_state = config_cols[2].number_input("Random state", min_value=0, value=42, step=1)
 
-	btn_cols = st.columns(2)
-	run_clustering_btn = btn_cols[0].button("🚀 Run clustering", use_container_width=True)
-	compare_btn = btn_cols[1].button("📊 Compare All Algorithms", use_container_width=True)
+	run_clustering_btn = st.button("✨ Apply Clustering", width='stretch')
 
 if run_clustering_btn:
 	try:
 		scaled_df, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
-		
-		# Auto Elbow Suggestion
-		elbow_df, best_k = compute_elbow_curve(
-			scaled_df,
-			algorithm="K-Means", # Usually K-Means is used for elbow
-			min_k=2,
-			max_k=min(10, len(scaled_df) - 1),
-			random_state=42,
-		)
-		if best_k:
-			st.session_state.best_k = best_k
-			st.info(f"💡 The Elbow method suggests an optimal k = {best_k}")
-
-		labels, model, exec_time = run_clustering(
+		labels, model, exec_time, inertia = run_clustering(
 			scaled_df,
 			algorithm=algorithm,
 			n_clusters=n_clusters,
-			random_state=int(random_state) if algorithm != "DBSCAN" else 42,
+			random_state=int(random_state),
 			**dbscan_params
 		)
 		
@@ -142,49 +176,48 @@ if run_clustering_btn:
 		clustered_df["cluster"] = labels
 		st.session_state.clustered_df = clustered_df
 		st.session_state.cluster_model = model
+		
+		params_str = f"k={n_clusters}" if algorithm != "DBSCAN" else f"eps={dbscan_params['eps']}"
+		st.session_state.comparison_history.append({
+			"Algorithm": algorithm,
+			"Parameters": params_str,
+			"Execution Time (s)": round(exec_time, 6),
+			"Silhouette Score": round(silhouette, 4),
+			"Inertia": round(inertia, 2) if inertia is not None else "N/A",
+			"Clusters Found": len([c for c in labels.unique() if c != -1])
+		})
 
-		st.subheader(f"📊 {algorithm} Results")
-		metric_cols = st.columns(4)
-		metric_cols[0].metric("Silhouette Score", f"{silhouette:.4f}")
-		metric_cols[1].metric("Clusters Found", len([c for c in labels.unique() if c != -1]))
-		metric_cols[2].metric("Execution Time", f"{exec_time:.4f}s")
-		metric_cols[3].metric("Algorithm", algorithm)
+		st.subheader(f"📊 {algorithm} Final Results")
+		m_cols = st.columns(4)
+		m_cols[0].metric("Silhouette", f"{silhouette:.4f}")
+		m_cols[1].metric("Clusters", len([c for c in labels.unique() if c != -1]))
+		m_cols[2].metric("Inertia", f"{inertia:.2f}" if inertia is not None else "N/A")
+		m_cols[3].metric("Time", f"{exec_time:.4f}s")
 
-		if algorithm != "DBSCAN":
-			elbow_fig = create_elbow_figure(elbow_df, algorithm_name="K-Means (Reference)")
-			st.plotly_chart(elbow_fig, use_container_width=True)
+		c_fig = create_cluster_2d_figure(pca_df, cluster_col="cluster")
+		st.plotly_chart(c_fig, width='stretch')
 
-		cluster_fig = create_cluster_2d_figure(pca_df, cluster_col="cluster")
-		st.plotly_chart(cluster_fig, use_container_width=True)
+		if algorithm in ["AGNES (Agglomerative)", "DIANA (Divisive)"]:
+			st.subheader("🌲 Dendrogram")
+			st.pyplot(create_dendrogram_figure(scaled_df))
 
-		distribution_fig = create_cluster_distribution_figure(labels)
-		st.plotly_chart(distribution_fig, use_container_width=True)
-
-		st.subheader("🧾 Clustered Dataset Preview")
-		st.dataframe(clustered_df.head(25), use_container_width=True)
-
-		st.download_button(
-			"Download clustered dataset",
-			data=clustered_df.to_csv(index=False).encode("utf-8"),
-			file_name=f"clustered_{algorithm.lower().replace(' ', '_')}.csv",
-			mime="text/csv",
-			use_container_width=True,
-		)
-	except (ValueError, ImportError) as exc:
+		st.download_button("Download Result CSV", clustered_df.to_csv(index=False).encode("utf-8"), "clustered.csv", "text/csv", width='stretch')
+	except Exception as exc:
 		st.error(str(exc))
 
-if compare_btn:
-	try:
-		scaled_df, _ = prepare_features_for_clustering(df, feature_columns=feature_columns)
-		comparison_df = compare_algorithms(scaled_df, ALGORITHMS, n_clusters=n_clusters)
-		
-		st.subheader("🏁 Performance Comparison")
-		st.dataframe(comparison_df, use_container_width=True)
-		
-		time_fig, sil_fig = create_comparison_charts(comparison_df)
-		chart_cols = st.columns(2)
-		chart_cols[0].plotly_chart(time_fig, use_container_width=True)
-		chart_cols[1].plotly_chart(sil_fig, use_container_width=True)
-		
-	except Exception as exc:
-		st.error(f"Comparison failed: {exc}")
+# Comparison Section - Only shows executed algorithms
+if st.session_state.comparison_history:
+	st.divider()
+	st.subheader("🏁 Performance Comparison (Executed Algorithms)")
+	
+	comp_df = pd.DataFrame(st.session_state.comparison_history)
+	st.dataframe(comp_df, width='stretch')
+	
+	time_fig, sil_fig = create_comparison_charts(comp_df)
+	chart_cols = st.columns(2)
+	chart_cols[0].plotly_chart(time_fig, width='stretch')
+	chart_cols[1].plotly_chart(sil_fig, width='stretch')
+	
+	if st.button("🗑️ Clear Comparison History", width='stretch'):
+		st.session_state.comparison_history = []
+		st.rerun()

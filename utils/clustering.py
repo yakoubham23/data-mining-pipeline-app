@@ -17,6 +17,43 @@ except Exception:  # noqa: BLE001
 	KMedoids = None
 
 
+from sklearn.neighbors import NearestNeighbors
+
+def suggest_dbscan_params(scaled_df: pd.DataFrame) -> tuple[float, int, pd.DataFrame]:
+	"""Suggest optimal epsilon and min_samples for DBSCAN."""
+	n_features = scaled_df.shape[1]
+	
+	# Heuristic for min_samples: 2 * dimensions
+	suggested_min_samples = max(4, 2 * n_features)
+	
+	# Estimate epsilon using k-distance graph (k = min_samples)
+	neigh = NearestNeighbors(n_neighbors=suggested_min_samples)
+	nbrs = neigh.fit(scaled_df)
+	distances, _ = nbrs.kneighbors(scaled_df)
+	
+	# Sort distances to the k-th nearest neighbor
+	k_distances = np.sort(distances[:, suggested_min_samples - 1])
+	
+	# Find elbow in k-distance graph
+	suggested_eps = 0.5 # Default fallback
+	try:
+		# Use kneed to find the elbow point
+		x = np.arange(len(k_distances))
+		kn = KneeLocator(x, k_distances, curve="convex", direction="increasing")
+		if kn.elbow:
+			suggested_eps = float(k_distances[kn.elbow])
+	except Exception:
+		pass
+		
+	# Prepare data for plotting the k-distance graph
+	k_dist_df = pd.DataFrame({
+		"index": np.arange(len(k_distances)),
+		"distance": k_distances
+	})
+	
+	return suggested_eps, suggested_min_samples, k_dist_df
+
+
 def prepare_features_for_clustering(
 	df: pd.DataFrame,
 	feature_columns: list[str],
@@ -119,8 +156,8 @@ def run_clustering(
 	n_clusters: int,
 	random_state: int = 42,
 	**kwargs
-) -> tuple[pd.Series, object, float]:
-	"""Fit the selected clustering model and return labels, model, and execution time."""
+) -> tuple[pd.Series, object, float, float | None]:
+	"""Fit the selected clustering model and return labels, model, execution time, and inertia."""
 	start_time = time.time()
 	
 	model = _create_model(algorithm=algorithm, n_clusters=n_clusters, random_state=random_state, **kwargs)
@@ -136,7 +173,13 @@ def run_clustering(
 		
 	execution_time = time.time() - start_time
 	labels_series = pd.Series(labels, index=scaled_df.index, name="cluster")
-	return labels_series, model, execution_time
+	
+	# Extract inertia if available
+	inertia = None
+	if hasattr(model, "inertia_"):
+		inertia = float(model.inertia_)
+		
+	return labels_series, model, execution_time, inertia
 
 
 def compute_silhouette(scaled_df: pd.DataFrame, labels: pd.Series) -> float:

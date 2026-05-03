@@ -92,7 +92,7 @@ with st.expander("⚙️ Classification Configuration", expanded=True):
 		default=MODEL_OPTIONS,
 	)
 
-	run_btn = st.button("🚀 Train and evaluate models", use_container_width=True)
+	run_btn = st.button("🚀 Train and evaluate models", width='stretch')
 
 if run_btn:
 	try:
@@ -128,7 +128,7 @@ if run_btn:
 result = st.session_state.get("classification_result")
 if result:
 	st.subheader("📋 Model Comparison")
-	st.dataframe(result["comparison_df"], use_container_width=True)
+	st.dataframe(result["comparison_df"], width='stretch')
 
 	class_labels = get_class_labels(result["y_test"], result["label_encoder"])
 
@@ -140,12 +140,12 @@ if result:
 			class_labels=class_labels,
 			model_name=model_name,
 		)
-		st.plotly_chart(fig, use_container_width=True)
+		st.plotly_chart(fig, width='stretch')
 
 	best_model_name = result["comparison_df"].iloc[0]["Model"]
 	st.info(f"Best model by F1-score: {best_model_name}")
 
-	if st.button("💾 Save best model", use_container_width=True):
+	if st.button("💾 Save best model", width='stretch'):
 		model_path = Path(__file__).resolve().parents[1] / "models" / "saved_models.pkl"
 		bundle = {
 			"saved_at": datetime.utcnow().isoformat() + "Z",

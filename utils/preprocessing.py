@@ -76,33 +76,41 @@ def handle_missing_values(
 		raise ValueError("Please select at least one valid column.")
 
 	if strategy == "dropna":
-		return updated.dropna().reset_index(drop=True)
+		return updated.dropna(subset=selected_columns).reset_index(drop=True)
 
 	if strategy == "mean":
-		numeric_cols = [
-			col for col in selected_columns if pd.api.types.is_numeric_dtype(updated[col])
-		]
-		if not numeric_cols:
-			raise ValueError("Mean imputation requires at least one numeric column.")
-		updated[numeric_cols] = updated[numeric_cols].fillna(
-			updated[numeric_cols].mean(numeric_only=True)
-		)
+		applied_count = 0
+		for col in selected_columns:
+			if pd.api.types.is_numeric_dtype(updated[col]):
+				mean_val = updated[col].mean()
+				if pd.notna(mean_val):
+					updated[col] = updated[col].fillna(mean_val)
+					applied_count += 1
+		if applied_count == 0:
+			raise ValueError("Mean imputation was not applied. Ensure selected columns are numeric.")
 		return updated
 
 	if strategy == "median":
-		numeric_cols = [
-			col for col in selected_columns if pd.api.types.is_numeric_dtype(updated[col])
-		]
-		if not numeric_cols:
-			raise ValueError("Median imputation requires at least one numeric column.")
-		updated[numeric_cols] = updated[numeric_cols].fillna(updated[numeric_cols].median())
+		applied_count = 0
+		for col in selected_columns:
+			if pd.api.types.is_numeric_dtype(updated[col]):
+				median_val = updated[col].median()
+				if pd.notna(median_val):
+					updated[col] = updated[col].fillna(median_val)
+					applied_count += 1
+		if applied_count == 0:
+			raise ValueError("Median imputation was not applied. Ensure selected columns are numeric.")
 		return updated
 
 	if strategy == "mode":
+		applied_count = 0
 		for col in selected_columns:
 			mode_series = updated[col].mode(dropna=True)
 			if not mode_series.empty:
 				updated[col] = updated[col].fillna(mode_series.iloc[0])
+				applied_count += 1
+		if applied_count == 0:
+			raise ValueError("Mode imputation was not applied. No modes found in selected columns.")
 		return updated
 
 	raise ValueError("Unknown missing-value strategy.")

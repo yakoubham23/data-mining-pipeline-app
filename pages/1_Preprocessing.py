@@ -44,7 +44,7 @@ with st.expander("📥 Load Dataset", expanded=True):
 
 	if load_cols[0].button(
 		"📂 Load uploaded CSV",
-		use_container_width=True,
+		width='stretch',
 		disabled=uploaded_file is None,
 	):
 		try:
@@ -55,7 +55,7 @@ with st.expander("📥 Load Dataset", expanded=True):
 		except ValueError as exc:
 			st.error(str(exc))
 
-	if load_cols[1].button("🧪 Load sample dataset", use_container_width=True):
+	if load_cols[1].button("🧪 Load sample dataset", width='stretch'):
 		try:
 			loaded_df = load_csv_dataset(sample_path)
 			_set_dataset(loaded_df, "sample.csv")
@@ -66,7 +66,7 @@ with st.expander("📥 Load Dataset", expanded=True):
 
 	if load_cols[2].button(
 		"♻️ Reset to original",
-		use_container_width=True,
+		width='stretch',
 		disabled=st.session_state.original_df is None,
 	):
 		st.session_state.processed_df = st.session_state.original_df.copy()
@@ -90,17 +90,17 @@ with st.expander("👀 Dataset Preview & Summary", expanded=True):
 	metric_cols[2].metric("Missing values", int(df.isna().sum().sum()))
 
 	st.subheader("Head")
-	st.dataframe(profile["head"], use_container_width=True)
+	st.dataframe(profile["head"], width='stretch')
 
 	st.subheader("DataFrame Info")
 	st.code(profile["info"])
 
 	st.subheader("Statistical Summary")
-	st.dataframe(profile["describe"], use_container_width=True)
+	st.dataframe(profile["describe"], width='stretch')
 
 with st.expander("🩹 Missing Values Handling", expanded=True):
 	report_df = missing_values_report(df)
-	st.dataframe(report_df, use_container_width=True)
+	st.dataframe(report_df, width='stretch')
 
 	strategy = st.selectbox(
 		"Choose strategy",
@@ -125,7 +125,7 @@ with st.expander("🩹 Missing Values Handling", expanded=True):
 		key="missing_columns",
 	)
 
-	if st.button("✅ Apply missing values strategy", use_container_width=True):
+	if st.button("✅ Apply missing values strategy", width='stretch'):
 		try:
 			columns = None if strategy == "dropna" else selected_columns
 			updated_df = handle_missing_values(df, strategy=strategy, columns=columns)
@@ -135,27 +135,9 @@ with st.expander("🩹 Missing Values Handling", expanded=True):
 		except ValueError as exc:
 			st.error(str(exc))
 
-with st.expander("🔠 Encode Categorical Variables", expanded=True):
-	if not categorical_cols:
-		st.info("No categorical columns detected.")
-	else:
-		selected_cat_cols = st.multiselect(
-			"Categorical columns to encode",
-			options=categorical_cols,
-			default=categorical_cols,
-			key="encoding_columns",
-		)
-		drop_first = st.toggle("Drop first level (avoid dummy trap)", value=False)
-
-		if st.button("✅ Apply one-hot encoding", use_container_width=True):
-			updated_df = encode_categorical(df, columns=selected_cat_cols, drop_first=drop_first)
-			st.session_state.processed_df = updated_df
-			st.success("Categorical encoding applied.")
-			st.rerun()
-
 with st.expander("📏 Feature Scaling", expanded=True):
 	if not numeric_cols:
-		st.warning("No numeric columns available for scaling.")
+		st.info("No numeric columns available for scaling.")
 	else:
 		selected_num_cols = st.multiselect(
 			"Numeric columns to scale",
@@ -170,7 +152,7 @@ with st.expander("📏 Feature Scaling", expanded=True):
 			key="scaler_choice",
 		)
 
-		if st.button("✅ Apply scaling", use_container_width=True):
+		if st.button("✅ Apply scaling", width='stretch'):
 			try:
 				method = "minmax" if scaler_name == "MinMaxScaler" else "standard"
 				updated_df, _ = scale_features(df, method=method, columns=selected_num_cols)
@@ -187,7 +169,7 @@ with st.expander("📈 Visualizations", expanded=True):
 		boxplot_cols = st.multiselect(
 			"Columns for boxplot",
 			options=current_numeric_cols,
-			default=current_numeric_cols[: min(5, len(current_numeric_cols))],
+			default=current_numeric_cols,
 			key="boxplot_cols",
 		)
 		if boxplot_cols:
@@ -196,14 +178,22 @@ with st.expander("📈 Visualizations", expanded=True):
 		scatter_cols = st.columns(2)
 		x_col = scatter_cols[0].selectbox("Scatter X-axis", options=current_numeric_cols, key="scatter_x")
 		y_options = [col for col in current_numeric_cols if col != x_col] or current_numeric_cols
-		y_col = scatter_cols[1].selectbox("Scatter Y-axis", options=y_options, key="scatter_y")
+		y_cols = scatter_cols[1].multiselect(
+			"Scatter Y-axis (Multi-select)",
+			options=y_options,
+			default=[y_options[0]] if y_options else [],
+			key="scatter_y"
+		)
 
-		color_options = ["None"] + current_categorical_cols
-		color_choice = st.selectbox("Color by", options=color_options, key="scatter_color")
+		color_options = ["None"] + df.columns.tolist()
+		color_choice = st.selectbox("Color by (Category or Scale)", options=color_options, key="scatter_color")
 		color_col = None if color_choice == "None" else color_choice
 
-		scatter_fig = create_scatter_figure(df, x_col=x_col, y_col=y_col, color_col=color_col)
-		st.plotly_chart(scatter_fig, use_container_width=True)
+		if y_cols:
+			scatter_fig = create_scatter_figure(df, x_col=x_col, y_cols=y_cols, color_col=color_col)
+			st.plotly_chart(scatter_fig, width='stretch')
+		else:
+			st.info("Please select at least one Y-axis column to display the scatter plot.")
 	else:
 		st.warning("Visualizations need at least one numeric column.")
 
@@ -213,5 +203,5 @@ st.download_button(
 	data=df.to_csv(index=False).encode("utf-8"),
 	file_name="processed_dataset.csv",
 	mime="text/csv",
-	use_container_width=True,
+	width='stretch',
 )

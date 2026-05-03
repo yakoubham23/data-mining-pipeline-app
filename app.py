@@ -167,4 +167,4 @@ with st.expander("🚀 Suggested Workflow", expanded=True):
 
 if st.session_state.get("processed_df") is not None:
 	st.subheader("🗂️ Current Processed Dataset Preview")
-	st.dataframe(st.session_state.processed_df.head(10), use_container_width=True)
+	st.dataframe(st.session_state.processed_df.head(10), width='stretch')
